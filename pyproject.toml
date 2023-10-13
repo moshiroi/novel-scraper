@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "novel-scraper"
+version = "0.1.0"
+description = ""
+authors = ["Mshire130 <mqsas1337@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+bs4 = "*"
+lxml = "^4.9.3"
+selenium = "^4.14.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
