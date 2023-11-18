@@ -1,0 +1,7 @@
+- links:
+  - chapter_links_url: <insert url for contents page>
+  - link_class: <add unique class for chapter links>
+- contents:
+  - content_class: <add chapter contents class>
+  - start_chapter: <starting chapter>
+  - ending_chapter: <ending chapter>
