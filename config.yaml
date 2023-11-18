@@ -1,7 +1,5 @@
-- links:
-  - chapter_links_url: <insert url for contents page>
-  - link_class: <add unique class for chapter links>
-- contents:
-  - content_class: <add chapter contents class>
-  - start_chapter: <starting chapter>
-  - ending_chapter: <ending chapter>
+links:
+    url: https://www.novelcool.com/chapter/Damn-Reincarnation-CH-0/8786442/
+    class: href
+content:
+    class: <add chapter contents class>
