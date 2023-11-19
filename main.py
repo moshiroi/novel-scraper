@@ -7,6 +7,9 @@ from loguru import logger
 
 # TODO:
 # -> Add retry on response error
+# -> Store chapters in memory
+# -> Add failed chapters to queue
+# -> Write chapters to file after finished collating them
 
 class NovelScraper:
     def __init__(self, config_path):
