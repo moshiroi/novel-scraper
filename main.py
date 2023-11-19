@@ -20,39 +20,38 @@ class NovelScraper:
             logger.success("Intialized NovelScraper Class")
 
     def from_config(self):
-        self.links_url = self.config["links"]["url"]
-        self.links_class = self.config["links"]["class"]
-        self.content_class = self.config["content"]["class"]
-        self.content_urls = []
+        self.book_title = self.config["book_title"]
+        self.source_url = self.config["links"]["source_url"]
+        self.next_chapter_class = self.config["identifiers"]["next_chapter"]
+        self.content_class = self.config["identifiers"]["content"]
+        self.current_url = self.source_url
         logger.success("Loaded config into NovelScraper")
 
-    def get_content_urls(self):
-        req = Request(self.links.url, headers={'User-Agent': 'Mozilla/5.0'})
-        webpage = urlopen(req).read()
-        soup = bs.BeautifulSoup(webpage, 'lxml')
-        link_tags = soup.find_all("a")
+    def get_next_chapter_url(self, soup):
+        link_tags = soup.find_all("a", id=self.next_chapter_class)
 
-        logger.info("retrieving links of interest")
+        logger.info("retrieving next chapter link")
         for tag in link_tags:
-            if self.links_class in tag.attrs:
-                self.content_urls.append(tag[self.links_class])
-        return
+            if "href" in tag.attrs:
+                return tag["href"]
 
-    def get_content(self):
+        return
+    
+    def scrape(self):
         forbidden_text = {"Chapter end", "Report"}
         driver = webdriver.Chrome()
         chapter_counter = 0
 
         f = open(
-            "novel/novel.docx", "a", encoding="utf-8")
+            f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
-        print(f"About to scrape: {len(self.content_urls)} chapters")
+        logger.info(f"About to begin scraping")
 
-        for url in self.content_urls:
-            print(
-                f"--------------- scraped url: {url} ----------------")
+        while self.current_url:
+            logger.info(
+                f"scraping url: {self.current_url}")
 
-            driver.get(url)
+            driver.get(self.current_url)
             time.sleep(5)
             html = driver.page_source
 
@@ -66,9 +65,13 @@ class NovelScraper:
                     if content_text.strip() not in forbidden_text and "Reddit" not in content_text.strip() and "ʟɪɢʜᴛɴᴏᴠᴇʟᴡᴏʀʟᴅ.ᴄᴏᴍ" not in content_text.strip():
                         f.write(content_text)
                         f.write("\n\n")
-            print(
-                f"---------------scraped chapter {chapter_counter} -------------------")
-            chapter_counter += 1
+            logger.success(
+                f"scraped chapter {chapter_counter}: self.current_url")
+
+            chapter_counter += 1 
+
+            # updating current url w/ next chapter url
+            self.current_url = self.get_next_chapter_url(soup)
 
         return
 
@@ -76,7 +79,7 @@ class NovelScraper:
 def main():
     novel_scraper= NovelScraper("config.yaml")
     novel_scraper.from_config()
-
+    novel_scraper.scrape()
     return
 
 if __name__ == "__main__":
