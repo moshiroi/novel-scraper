@@ -1,6 +1,17 @@
 book_title: A will eternal
 links:
+    prefix_url: https://readnovelfull.me
     source_url: https://readnovelfull.me/a-will-eternal/chapter-1-im-bai-xiaochun/
 identifiers:
     next_chapter: "next_chap"
     content: "chr-c"
+    title:
+        chapter_title_tag: a
+        chapter_title_class: chr-title
+        chapter_title_attribute: title
+text_filter:
+    - Ads by PubFuture
+    - Reddit
+    - Facebook
+    - Chapter end
+    - Report

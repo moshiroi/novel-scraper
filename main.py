@@ -6,11 +6,7 @@ import yaml
 from loguru import logger
 
 # TODO:
-# -> Add retry on error
-# -> superfluous errors cause script to break
-# -> requires manual rerun from the last chapter scraped
-
-# TODO: Split main into multiple functions & optimize iterations/loops
+# -> Add retry on response error
 
 class NovelScraper:
     def __init__(self, config_path):
@@ -21,10 +17,20 @@ class NovelScraper:
 
     def from_config(self):
         self.book_title = self.config["book_title"]
+        self.prefix_url = self.config["links"]["prefix_url"]
         self.source_url = self.config["links"]["source_url"]
         self.next_chapter_class = self.config["identifiers"]["next_chapter"]
         self.content_class = self.config["identifiers"]["content"]
         self.current_url = self.source_url
+        self.chapter_title_tag = self.config["identifiers"]["title"]["chapter_title_tag"]
+        self.chapter_title_class = self.config["identifiers"]["title"]["chapter_title_class"]
+        if "chapter_title_attribute" in self.config["identifiers"]["title"]:
+            logger.info("chapter_title_attribute found")
+            self.chapter_title_attribute = self.config["identifiers"]["title"]["chapter_title_attribute"]
+
+        self.filter = self.config["text_filter"]
+
+        logger.info("chapter_title_attribute not found")
         logger.success("Loaded config into NovelScraper")
 
     def get_next_chapter_url(self, soup):
@@ -33,19 +39,35 @@ class NovelScraper:
         logger.info("retrieving next chapter link")
         for tag in link_tags:
             if "href" in tag.attrs:
-                return tag["href"]
-
+                return self.prefix_url + tag["href"]
         return
-    
+
+    def get_chapter_title(self, soup):
+        chapter_title_tags = soup.find_all(
+            self.chapter_title_tag, class_=self.chapter_title_class)
+
+        logger.info("retrieving chapter title")
+        for tag in chapter_title_tags:
+            if hasattr(self, 'chapter_title_attribute'):
+                if self.chapter_title_attribute in tag.attrs:
+                    logger.info(
+                        f"title is {tag[self.chapter_title_attribute]}")
+                    return tag[self.chapter_title_attribute]
+            else:
+                # TODO: Refine logic for this section
+                logger.info("Couldn't find title, trying alternative")
+                return tag.contents[0].get_text().strip()
+        logger.error("No chapter title found")
+        return
+
     def scrape(self):
-        forbidden_text = {"Chapter end", "Report"}
+        forbidden_text = set(self.filter)
         driver = webdriver.Chrome()
-        chapter_counter = 0
 
         f = open(
             f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
-        logger.info(f"About to begin scraping")
+        logger.info("About to begin scraping")
 
         while self.current_url:
             logger.info(
@@ -56,19 +78,25 @@ class NovelScraper:
             html = driver.page_source
 
             soup = bs.BeautifulSoup(html, 'lxml')
+
+            chapter_title = self.get_chapter_title(soup)
+            f.write(chapter_title)
+            f.write("\n\n")
+            logger.info("Wrote chapter title to file")
+
             chapter_content_tags = soup.find_all(
                 "div", class_=(self.content_class))
 
             for tag in chapter_content_tags:
                 for content in tag.contents:
                     content_text = content.get_text()
-                    if content_text.strip() not in forbidden_text and "Reddit" not in content_text.strip() and "ʟɪɢʜᴛɴᴏᴠᴇʟᴡᴏʀʟᴅ.ᴄᴏᴍ" not in content_text.strip():
+                    if content_text.strip() not in forbidden_text:
                         f.write(content_text)
                         f.write("\n\n")
-            logger.success(
-                f"scraped chapter {chapter_counter}: self.current_url")
+                        logger.trace("wrote to output file")
 
-            chapter_counter += 1 
+            logger.success(
+                f"scraped chapter: {self.current_url}")
 
             # updating current url w/ next chapter url
             self.current_url = self.get_next_chapter_url(soup)
@@ -77,10 +105,11 @@ class NovelScraper:
 
 
 def main():
-    novel_scraper= NovelScraper("config.yaml")
+    novel_scraper = NovelScraper("config.yaml")
     novel_scraper.from_config()
     novel_scraper.scrape()
     return
+
 
 if __name__ == "__main__":
     main()
