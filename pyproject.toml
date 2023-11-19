@@ -7,9 +7,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-bs4 = "*"
 lxml = "^4.9.3"
 selenium = "^4.14.0"
+pyyaml = "^6.0.1"
+loguru = "^0.7.2"
+beautifulsoup4 = "^4.12.2"
 
 
 [build-system]
