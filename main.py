@@ -8,6 +8,7 @@ from loguru import logger
 # TODO:
 # -> Add retry on response error
 
+
 class NovelScraper:
     def __init__(self, config_path):
         with open(config_path, 'r') as file:
@@ -16,25 +17,40 @@ class NovelScraper:
             logger.success("Intialized NovelScraper Class")
 
     def from_config(self):
+        # Title
         self.book_title = self.config["book_title"]
+
+        # Urls
         self.prefix_url = self.config["links"]["prefix_url"]
         self.source_url = self.config["links"]["source_url"]
-        self.next_chapter_class = self.config["identifiers"]["next_chapter"]
-        self.content_class = self.config["identifiers"]["content"]
-        self.current_url = self.source_url
-        self.chapter_title_tag = self.config["identifiers"]["title"]["chapter_title_tag"]
-        self.chapter_title_class = self.config["identifiers"]["title"]["chapter_title_class"]
-        if "chapter_title_attribute" in self.config["identifiers"]["title"]:
+        self.current_url = self.config["links"]["source_url"]
+
+        # Next chapter details
+        self.next_chapter_tag = self.config["identifiers"]["next_chapter"]["tag"]
+        self.next_chapter_id_type = self.config["identifiers"]["next_chapter"]["type"]
+        self.next_chapter_id_name = self.config["identifiers"]["next_chapter"]["name"]
+
+        # Content details
+        self.content_tag = self.config["identifiers"]["content"]["tag"]
+        self.content_id_type = self.config["identifiers"]["content"]["type"]
+        self.content_id_name = self.config["identifiers"]["content"]["name"]
+
+        # Title details
+        self.chapter_title_tag = self.config["identifiers"]["title"]["tag"]
+        self.chapter_title_id_type = self.config["identifiers"]["title"]["type"]
+        self.chapter_title_id_name = self.config["identifiers"]["title"]["name"]
+
+        if "attribute" in self.config["identifiers"]["title"]:
             logger.info("chapter_title_attribute found")
-            self.chapter_title_attribute = self.config["identifiers"]["title"]["chapter_title_attribute"]
+            self.chapter_title_attribute = self.config["identifiers"]["title"]["attribute"]
 
         self.filter = self.config["text_filter"]
 
-        logger.info("chapter_title_attribute not found")
         logger.success("Loaded config into NovelScraper")
 
     def get_next_chapter_url(self, soup):
-        link_tags = soup.find_all("a", id=self.next_chapter_class)
+        link_tags = soup.find_all(
+            self.next_chapter_tag, **{self.next_chapter_id_type: self.next_chapter_id_name})
 
         logger.info("retrieving next chapter link")
         for tag in link_tags:
@@ -44,7 +60,7 @@ class NovelScraper:
 
     def get_chapter_title(self, soup):
         chapter_title_tags = soup.find_all(
-            self.chapter_title_tag, class_=self.chapter_title_class)
+            self.chapter_title_tag, **{self.chapter_title_id_type: self.chapter_title_id_name})
 
         logger.info("retrieving chapter title")
         for tag in chapter_title_tags:
@@ -85,7 +101,7 @@ class NovelScraper:
             logger.info("Wrote chapter title to file")
 
             chapter_content_tags = soup.find_all(
-                "div", class_=(self.content_class))
+                self.content_tag, **{self.content_id_type: self.content_id_name})
 
             for tag in chapter_content_tags:
                 for content in tag.contents:

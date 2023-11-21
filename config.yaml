@@ -1,14 +1,21 @@
-book_title: A will eternal
+book_title: Martial world
 links:
     prefix_url: https://readnovelfull.me
-    source_url: https://readnovelfull.me/a-will-eternal/chapter-1-im-bai-xiaochun/
+    source_url: https://readnovelfull.me/martial-world/chapter-0-magic-cube/
 identifiers:
-    next_chapter: "next_chap"
-    content: "chr-c"
+    next_chapter:
+        tag: a
+        type: id
+        name: next_chap
+    content: 
+        tag: div
+        type: class_
+        name: chap-c
     title:
-        chapter_title_tag: a
-        chapter_title_class: chr-title
-        chapter_title_attribute: title
+        tag: a
+        type: class_
+        name: chr-title
+        attribute: title
 text_filter:
     - Ads by PubFuture
     - Reddit
