@@ -4,6 +4,7 @@ from selenium import webdriver
 import time
 import yaml
 from loguru import logger
+import undetected_chromedriver as uc
 
 
 # TODO: Add retry on response error
@@ -93,7 +94,9 @@ class NovelScraper:
 
     def scrape(self):
         forbidden_text = set(self.filter)
-        driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument("start-maximized")
+        driver = uc.Chrome(options=options)
 
         f = open(f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
