@@ -1,7 +1,7 @@
-book_title: Way of choices
+book_title: A will eternal
 links:
-    prefix_url: ""
-    source_url: https://novelbin.org/novelbin/ze-tian-ji/chapter-1
+    prefix_url: https://readnovelfull.me
+    source_url: https://readnovelfull.me/a-will-eternal/chapter-1-im-bai-xiaochun/
 identifiers:
     next_chapter:
         tag: a
@@ -10,7 +10,7 @@ identifiers:
     content: 
         tag: div
         type: class_
-        name: chap-c
+        name: chr-c
     title:
         tag: a
         type: class_
