@@ -10,7 +10,7 @@ identifiers:
     content: 
         tag: div
         type: class_
-        name: chap-c
+        name: chr-c
     title:
         tag: a
         type: class_
