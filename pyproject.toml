@@ -2,7 +2,7 @@
 name = "novel-scraper"
 version = "0.1.0"
 description = ""
-authors = ["Mshire130 <mqsas1337@gmail.com>"]
+authors = ["moshiroi <mqsas1337@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
