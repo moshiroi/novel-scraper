@@ -1,11 +1,12 @@
-import bs4 as bs
-from urllib.request import Request, urlopen
+# import bs4 as bs
 from selenium import webdriver
 import time
 import yaml
 from loguru import logger
 import undetected_chromedriver as uc
 
+from selenium.webdriver.chrome.service import Service
+import bs4 as bs
 
 # TODO: Add retry on response error
 class NovelScraper:
@@ -92,11 +93,14 @@ class NovelScraper:
         logger.error("No chapter title found")
         return
 
+    # TODO: Should take a path to your chromedriver 
     def scrape(self):
         forbidden_text = set(self.filter)
         options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
-        driver = uc.Chrome(options=options)
+        options.add_argument("--headless")
+        # NOTE: Path to chromedriver in nix store was not working, was being reported as a read only path,
+        # work around was cping chromedriver to diff path
+        driver = uc.Chrome(options=options, driver_executable_path="/home/nixos/chromedriver")
 
         f = open(f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
@@ -110,6 +114,7 @@ class NovelScraper:
             html = driver.page_source
 
             soup = bs.BeautifulSoup(html, "lxml")
+            print(html)
 
             chapter_title = self.get_chapter_title(soup)
             f.write(chapter_title)
