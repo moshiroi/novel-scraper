@@ -114,7 +114,6 @@ class NovelScraper:
             html = driver.page_source
 
             soup = bs.BeautifulSoup(html, "lxml")
-            print(html)
 
             chapter_title = self.get_chapter_title(soup)
             f.write(chapter_title)
