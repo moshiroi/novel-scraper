@@ -97,10 +97,10 @@ class NovelScraper:
     def scrape(self):
         forbidden_text = set(self.filter)
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         # NOTE: Path to chromedriver in nix store was not working, was being reported as a read only path,
         # work around was cping chromedriver to diff path
-        driver = uc.Chrome(options=options, driver_executable_path="/home/nixos/chromedriver")
+        driver = uc.Chrome(options=options, driver_executable_path="chromedriver")
 
         f = open(f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
