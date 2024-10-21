@@ -6,13 +6,14 @@ from loguru import logger
 import undetected_chromedriver as uc
 import bs4 as bs
 import sys
-import tempfile
 import os
+import tempfile
 
 # TODO: Add retry on response error
 class NovelScraper:
-    def __init__(self, config_path, chromedriver_path):
+    def __init__(self, config_path, chromedriver_path, output_dir):
         self.chromedriver_path = chromedriver_path
+        self.output_dir = output_dir
         with open(config_path, "r") as file:
             logger.info("extracting config")
             self.config = yaml.safe_load(file)
@@ -102,11 +103,15 @@ class NovelScraper:
 
         # NOTE: Path to chromedriver in nix store was not working, was being reported as a read only path,
         # work around was cping chromedriver to diff path
-        driver = uc.Chrome(options=options, driver_executable_path=self.chromedriver_path )
-        
-        os.makedirs('novel', exist_ok=True)
+        # Create a writable temporary directory for Chrome user data
+        tmp_user_data_dir = tempfile.mkdtemp()
 
-        f = open(f"novel/{self.book_title}.docx", "a", encoding="utf-8")
+        # Initialize Chrome with undetected_chromedriver, specifying the custom user data directory
+        driver = uc.Chrome(options=options, driver_executable_path=self.chromedriver_path, user_data_dir = tmp_user_data_dir )
+        
+        os.makedirs(self.output_dir, exist_ok=True)
+
+        f = open(f"{self.output_dir}/{self.book_title}.docx", "a", encoding="utf-8")
 
         logger.info("About to begin scraping")
 
@@ -148,7 +153,9 @@ class NovelScraper:
 def main():
     config_path = sys.argv[1]
     chromedriver_path = sys.argv[2]
-    novel_scraper = NovelScraper(config_path, chromedriver_path)
+    output_path= sys.argv[3]
+    print(f"config path ${config_path}, chrome driver path ${chromedriver_path}, output path ${output_path}")
+    novel_scraper = NovelScraper(config_path, chromedriver_path, output_path)
     novel_scraper.from_config()
     novel_scraper.scrape()
     return
