@@ -4,13 +4,15 @@ import time
 import yaml
 from loguru import logger
 import undetected_chromedriver as uc
-
-from selenium.webdriver.chrome.service import Service
 import bs4 as bs
+import sys
+import tempfile
+import os
 
 # TODO: Add retry on response error
 class NovelScraper:
-    def __init__(self, config_path):
+    def __init__(self, config_path, chromedriver_path):
+        self.chromedriver_path = chromedriver_path
         with open(config_path, "r") as file:
             logger.info("extracting config")
             self.config = yaml.safe_load(file)
@@ -92,15 +94,17 @@ class NovelScraper:
                 return tag.contents[0].get_text().strip()
         logger.error("No chapter title found")
         return
-
-    # TODO: Should take a path to your chromedriver 
+    
+    # NOTE: Does not work in headless mode atm
     def scrape(self):
         forbidden_text = set(self.filter)
         options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
+
         # NOTE: Path to chromedriver in nix store was not working, was being reported as a read only path,
         # work around was cping chromedriver to diff path
-        driver = uc.Chrome(options=options, driver_executable_path="chromedriver")
+        driver = uc.Chrome(options=options, driver_executable_path=self.chromedriver_path )
+        
+        os.makedirs('novel', exist_ok=True)
 
         f = open(f"novel/{self.book_title}.docx", "a", encoding="utf-8")
 
@@ -142,7 +146,9 @@ class NovelScraper:
 
 
 def main():
-    novel_scraper = NovelScraper("config.yaml")
+    config_path = sys.argv[1]
+    chromedriver_path = sys.argv[2]
+    novel_scraper = NovelScraper(config_path, chromedriver_path)
     novel_scraper.from_config()
     novel_scraper.scrape()
     return
