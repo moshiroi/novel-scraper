@@ -99,9 +99,7 @@
             chmod +x $out/bin/main.py  # Make your script executable
           '';
 
-          meta =  {
-            description = "A Python scraper tool";
-          };
+          meta = { description = "A Python scraper tool"; };
         };
 
       in with pkgs; {
@@ -117,6 +115,9 @@
             python3Packages.undetected-chromedriver
             chromium
             chromedriver
+            rustc
+            cargo
+            rust-analyzer
           ];
         };
 
