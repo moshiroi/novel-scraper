@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+eyre = "0.6.12"
+tracing = "0.1.40"
+undetected-chromedriver = "=0.1.2"
+tokio = "1.41.0"
