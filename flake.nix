@@ -104,6 +104,7 @@
 
         rustBuildInputs  = with pkgs; [
             rustc
+            rustfmt
             cargo
             rust-analyzer
             pkg-config
