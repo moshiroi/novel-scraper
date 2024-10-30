@@ -44,6 +44,7 @@ impl BookDetails {
             )?
             .to_owned();
 
+        println!("{:?}", yaml);
         let book_title = yaml["book_title"]
             .as_str()
             .ok_or_eyre("no book_title field in config yaml")?
@@ -58,8 +59,6 @@ impl BookDetails {
         let chapter_title = ElementSelector::from_yaml(&yaml["identifiers"]["title"])?;
         let chapter_content = ElementSelector::from_yaml(&yaml["identifiers"]["content"])?;
         let next_chapter_link = ElementSelector::from_yaml(&yaml["identifiers"]["next_chapter"])?;
-
-        println!("{:?}", yaml);
 
         Ok(Self {
             book_title,
