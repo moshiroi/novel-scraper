@@ -4,14 +4,12 @@ use eyre::OptionExt;
 use serde::Deserialize;
 use thirtyfour::prelude::*;
 use url::Url;
-use yaml_rust::{Yaml, YamlLoader};
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
     let config_path = PathBuf::from_str("./config.yaml")?;
     let yaml = std::fs::read_to_string(config_path)?;
     let serde_yaml: BookDetails = serde_yaml::from_str(&yaml)?;
-    // let yaml = BookDetails::from_path(config_path)?;
 
     let caps = DesiredCapabilities::chrome();
     let driver = WebDriver::new("http://localhost:4444", caps.clone()).await?;
@@ -47,12 +45,10 @@ struct Identifiers {
 
 #[derive(Deserialize, Debug)]
 struct ElementSelector {
-    #[serde(rename = "tag")]
-    html_tag: String,
+    tag: String,
     #[serde(rename = "type")]
     identifier_type: HtmlIdentifier,
-    #[serde(rename = "name")]
-    identifier_name: String,
+    name: String,
     attribute: Option<String>,
 }
 
@@ -63,17 +59,12 @@ enum HtmlIdentifier {
     #[serde(rename = "class_")]
     Class,
 }
-impl FromStr for HtmlIdentifier {
-    type Err = eyre::Report;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if (s.eq_ignore_ascii_case("id")) {
-            return Ok(HtmlIdentifier::Id);
-        } else if (s.eq_ignore_ascii_case("class")) {
-            return Ok(HtmlIdentifier::Class);
-        } else {
-            return Err(eyre::eyre!(
-                "Invalid input for constructing HtmlIdentifier, expected class or id"
-            ));
+
+impl AsRef<str> for HtmlIdentifier {
+    fn as_ref(&self) -> &str {
+        match self {
+            HtmlIdentifier::Id => "id",
+            HtmlIdentifier::Class => "class",
         }
     }
 }
