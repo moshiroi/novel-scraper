@@ -99,14 +99,18 @@
             chmod +x $out/bin/main.py  # Make your script executable
           '';
 
-          meta =  {
-            description = "A Python scraper tool";
-          };
+          meta = { description = "A Python scraper tool"; };
         };
 
-      in with pkgs; {
-        devShells.default = mkShell {
-          buildInputs = [
+        rustBuildInputs  = with pkgs; [
+            rustc
+            rustfmt
+            cargo
+            rust-analyzer
+            pkg-config
+            openssl
+        ];
+        pythonBuildInputs  = with pkgs; [
             python3
             poetry
             python3Packages.lxml
@@ -115,9 +119,14 @@
             python3Packages.loguru
             python3Packages.beautifulsoup4
             python3Packages.undetected-chromedriver
+        ];
+
+      in with pkgs; {
+        devShells.default = mkShell {
+          buildInputs = [
             chromium
             chromedriver
-          ];
+          ] ++ pythonBuildInputs ++ rustBuildInputs;
         };
 
         packages.default = novelScraper;
