@@ -56,7 +56,7 @@ impl Scraper {
         }
         .await?;
 
-        dbg!(title);
+        dbg!(title.text().await?);
 
         Ok(())
     }
