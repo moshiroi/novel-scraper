@@ -25,6 +25,7 @@ async fn main() -> eyre::Result<()> {
     Ok(())
 }
 
+// See: https://docs.rs/thirtyfour/latest/thirtyfour/session/handle/struct.SessionHandle.html#method.find
 pub struct Scraper {
     pub driver: WebDriver,
     pub book_details: BookDetails,
