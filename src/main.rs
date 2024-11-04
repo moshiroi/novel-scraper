@@ -1,5 +1,6 @@
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
+use eyre::OptionExt;
 use models::config::{BookDetails, ElementSelector, HtmlIdentifier};
 use thirtyfour::prelude::*;
 
@@ -18,8 +19,7 @@ async fn main() -> eyre::Result<()> {
         .goto("https://novelbin.org/novelbin/ze-tian-ji/chapter-1")
         .await?;
     std::thread::sleep(Duration::from_secs(2));
-    scraper.get_chapter_title().await?;
-    scraper.get_chapter_contents().await?;
+    scraper.scrape().await?;
     // Always explicitly close the browser.
     scraper.driver.quit().await?;
 
@@ -43,49 +43,42 @@ impl Scraper {
         })
     }
 
-    pub fn scrape(&self) {
-        todo!();
-        self.get_chapter_title();
-        self.get_chapter_contents();
-        self.get_next_chapter_link();
-    }
+    pub async fn scrape(&self) -> eyre::Result<()> {
+        let title = self
+            .retrieve_element(&self.book_details.identifiers.title)
+            .await?
+            .text()
+            .await?;
 
-    pub async fn get_chapter_title(&self) -> eyre::Result<()> {
-        let title_details = &self.book_details.identifiers.title;
-        let title = match title_details.identifier_type {
-            HtmlIdentifier::Id => self.driver.find(By::Id(title_details.name.clone())),
-            HtmlIdentifier::Class => self.driver.find(By::ClassName(title_details.name.clone())),
-        }
-        .await?;
+        dbg!(title);
 
-        dbg!(title.text().await?);
-
-        Ok(())
-    }
-
-    pub async fn get_chapter_contents(&self) -> eyre::Result<()> {
         let contents = self
             .retrieve_element(&self.book_details.identifiers.content)
+            .await?
+            .text()
             .await?;
 
         dbg!(contents);
 
+        let next_chapter_link = self
+            .retrieve_element(&self.book_details.identifiers.next_chapter)
+            .await?
+            .attr("href")
+            .await?
+            .ok_or_eyre("Could not get href of next chapter link <a>")?;
+
+        dbg!(next_chapter_link);
+
         Ok(())
     }
 
-    pub fn get_next_chapter_link(&self) {
-        todo!()
-    }
-
-    pub async fn retrieve_element(&self, element: &ElementSelector) -> eyre::Result<String> {
-        let text = match element.identifier_type {
+    pub async fn retrieve_element(&self, element: &ElementSelector) -> eyre::Result<WebElement> {
+        let web_element = match element.identifier_type {
             HtmlIdentifier::Id => self.driver.find(By::Id(element.name.clone())),
             HtmlIdentifier::Class => self.driver.find(By::ClassName(element.name.clone())),
         }
-        .await?
-        .text()
         .await?;
 
-        Ok(text)
+        Ok(web_element)
     }
 }
