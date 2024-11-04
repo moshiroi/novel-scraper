@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
-use models::config::{BookDetails, HtmlIdentifier};
+use models::config::{BookDetails, ElementSelector, HtmlIdentifier};
 use thirtyfour::prelude::*;
 
 mod models;
@@ -19,6 +19,7 @@ async fn main() -> eyre::Result<()> {
         .await?;
     std::thread::sleep(Duration::from_secs(2));
     scraper.get_chapter_title().await?;
+    scraper.get_chapter_contents().await?;
     // Always explicitly close the browser.
     scraper.driver.quit().await?;
 
@@ -62,11 +63,29 @@ impl Scraper {
         Ok(())
     }
 
-    pub fn get_chapter_contents(&self) {
-        todo!()
+    pub async fn get_chapter_contents(&self) -> eyre::Result<()> {
+        let contents = self
+            .retrieve_element(&self.book_details.identifiers.content)
+            .await?;
+
+        dbg!(contents);
+
+        Ok(())
     }
 
     pub fn get_next_chapter_link(&self) {
         todo!()
+    }
+
+    pub async fn retrieve_element(&self, element: &ElementSelector) -> eyre::Result<String> {
+        let text = match element.identifier_type {
+            HtmlIdentifier::Id => self.driver.find(By::Id(element.name.clone())),
+            HtmlIdentifier::Class => self.driver.find(By::ClassName(element.name.clone())),
+        }
+        .await?
+        .text()
+        .await?;
+
+        Ok(text)
     }
 }
