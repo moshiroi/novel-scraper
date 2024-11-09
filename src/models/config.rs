@@ -2,34 +2,34 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 pub struct BookDetails {
-    book_title: String,
-    links: Links,
-    identifiers: Identifiers,
+    pub book_title: String,
+    pub links: Links,
+    pub identifiers: Identifiers,
 }
 
 #[derive(Deserialize, Debug)]
-struct Links {
-    source_url: String,
+pub struct Links {
+    pub source_url: String,
 }
 
 #[derive(Deserialize, Debug)]
-struct Identifiers {
-    next_chapter: ElementSelector,
-    content: ElementSelector,
-    title: ElementSelector,
+pub struct Identifiers {
+    pub next_chapter: ElementSelector,
+    pub content: ElementSelector,
+    pub title: ElementSelector,
 }
 
 #[derive(Deserialize, Debug)]
-struct ElementSelector {
-    tag: String,
+pub struct ElementSelector {
+    pub tag: String,
     #[serde(rename = "type")]
-    identifier_type: HtmlIdentifier,
-    name: String,
-    attribute: Option<String>,
+    pub identifier_type: HtmlIdentifier,
+    pub name: String,
+    pub attribute: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
-enum HtmlIdentifier {
+pub enum HtmlIdentifier {
     #[serde(rename = "id")]
     Id,
     #[serde(rename = "class_")]
