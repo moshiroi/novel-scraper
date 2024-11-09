@@ -12,3 +12,5 @@ thirtyfour = "0.34.0"
 url = "2.5.2"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+tracing-subscriber = "0.3.18"
+serde_json = "1.0.132"

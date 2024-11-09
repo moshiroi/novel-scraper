@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr, time::Duration};
+use std::{fs::File, io::Write, path::PathBuf, str::FromStr, time::Duration};
 
 use eyre::OptionExt;
 use models::config::{BookDetails, ElementSelector, HtmlIdentifier};
@@ -6,15 +6,30 @@ use thirtyfour::prelude::*;
 
 mod models;
 
+const SCRAPING_DELAY: Duration = Duration::from_secs(3);
+
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
+    tracing_subscriber::fmt::init();
+
     let config_path = PathBuf::from_str("./config.yaml")?;
-    let caps = DesiredCapabilities::chrome();
+    let mut caps = DesiredCapabilities::chrome();
+
+    caps.add_arg("--disable-popup-blocking")?;
+    caps.add_experimental_option(
+        "excludeSwitches",
+        vec!["--disable-popup-blocking", "disable-popup-blocking"],
+    )?;
+    caps.add_experimental_option(
+        "prefs",
+        serde_json::json!({
+            "profile.default_content_setting_values.popups": 1
+        }),
+    )?;
     let driver = WebDriver::new("http://localhost:4444", caps.clone()).await?;
 
     let scraper = Scraper::new(config_path, driver)?;
     scraper.scrape().await?;
-    // Always explicitly close the browser.
     scraper.driver.quit().await?;
 
     Ok(())
@@ -43,20 +58,22 @@ impl Scraper {
         self.driver
             .goto(&self.book_details.links.source_url)
             .await?;
+
         // EXCEPTION: need wait for the page to load before scraping contents
-        std::thread::sleep(Duration::from_secs(1));
-        let mut next_link = self.scrape_current_chapter().await?;
+        let mut f = File::create(&self.book_details.book_title)?;
+        std::thread::sleep(SCRAPING_DELAY);
+        let mut next_link = self.scrape_current_chapter(&mut f).await?;
 
         while !next_link.is_empty() {
             self.driver.goto(next_link).await?;
-            std::thread::sleep(Duration::from_secs(1));
-            next_link = self.scrape_current_chapter().await?;
+            std::thread::sleep(SCRAPING_DELAY);
+            next_link = self.scrape_current_chapter(&mut f).await?;
         }
 
         Ok(())
     }
 
-    pub async fn scrape_current_chapter(&self) -> eyre::Result<String> {
+    pub async fn scrape_current_chapter(&self, f: &mut File) -> eyre::Result<String> {
         tracing::info!("Starting scraping");
         let title = self
             .retrieve_element(&self.book_details.identifiers.title)
@@ -64,8 +81,10 @@ impl Scraper {
             .text()
             .await?;
 
+        f.write(title.as_bytes())?;
+        f.write(b"\n")?;
+        f.write(b"\n")?;
         tracing::info!("Retrieved chapter title");
-        dbg!(title);
 
         let contents = self
             .retrieve_element(&self.book_details.identifiers.content)
@@ -73,8 +92,9 @@ impl Scraper {
             .text()
             .await?;
 
+        f.write(contents.as_bytes())?;
+        f.write(b"\n");
         tracing::info!("Retrieved chapter contents");
-        dbg!(contents);
 
         let next_chapter_link = self
             .retrieve_element(&self.book_details.identifiers.next_chapter)
@@ -82,9 +102,7 @@ impl Scraper {
             .attr("href")
             .await?
             .ok_or_eyre("Could not get href of next chapter link <a>")?;
-
-        tracing::info!("Retrieved next chapter link");
-        dbg!(&next_chapter_link);
+        tracing::info!("Retrieved next chapter link: {}", &next_chapter_link);
 
         Ok(next_chapter_link)
     }
