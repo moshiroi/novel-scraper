@@ -13,12 +13,6 @@ async fn main() -> eyre::Result<()> {
     let driver = WebDriver::new("http://localhost:4444", caps.clone()).await?;
 
     let scraper = Scraper::new(config_path, driver)?;
-    scraper.driver.maximize_window().await?;
-    scraper
-        .driver
-        .goto("https://novelbin.org/novelbin/ze-tian-ji/chapter-1")
-        .await?;
-    std::thread::sleep(Duration::from_secs(2));
     scraper.scrape().await?;
     // Always explicitly close the browser.
     scraper.driver.quit().await?;
@@ -36,7 +30,7 @@ impl Scraper {
     pub fn new(config_path: PathBuf, driver: WebDriver) -> eyre::Result<Self> {
         let yaml = std::fs::read_to_string(config_path)?;
         let book_details: BookDetails = serde_yaml::from_str(&yaml)?;
-
+        tracing::info!("Succesfully parsed scraping config");
         Ok(Self {
             driver,
             book_details,
@@ -44,12 +38,33 @@ impl Scraper {
     }
 
     pub async fn scrape(&self) -> eyre::Result<()> {
+        self.driver.maximize_window().await?;
+        // Go to source url - begin crawling
+        self.driver
+            .goto(&self.book_details.links.source_url)
+            .await?;
+        // EXCEPTION: need wait for the page to load before scraping contents
+        std::thread::sleep(Duration::from_secs(1));
+        let mut next_link = self.scrape_current_chapter().await?;
+
+        while !next_link.is_empty() {
+            self.driver.goto(next_link).await?;
+            std::thread::sleep(Duration::from_secs(1));
+            next_link = self.scrape_current_chapter().await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn scrape_current_chapter(&self) -> eyre::Result<String> {
+        tracing::info!("Starting scraping");
         let title = self
             .retrieve_element(&self.book_details.identifiers.title)
             .await?
             .text()
             .await?;
 
+        tracing::info!("Retrieved chapter title");
         dbg!(title);
 
         let contents = self
@@ -58,6 +73,7 @@ impl Scraper {
             .text()
             .await?;
 
+        tracing::info!("Retrieved chapter contents");
         dbg!(contents);
 
         let next_chapter_link = self
@@ -67,9 +83,10 @@ impl Scraper {
             .await?
             .ok_or_eyre("Could not get href of next chapter link <a>")?;
 
-        dbg!(next_chapter_link);
+        tracing::info!("Retrieved next chapter link");
+        dbg!(&next_chapter_link);
 
-        Ok(())
+        Ok(next_chapter_link)
     }
 
     pub async fn retrieve_element(&self, element: &ElementSelector) -> eyre::Result<WebElement> {
