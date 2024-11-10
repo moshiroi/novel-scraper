@@ -22,16 +22,10 @@ async fn main() -> eyre::Result<()> {
     let mut caps = DesiredCapabilities::chrome();
 
     caps.add_arg("--disable-popup-blocking")?;
-    caps.add_arg("--headless")?;
+    // caps.add_arg("--headless")?;
     caps.add_experimental_option(
         "excludeSwitches",
         vec!["--disable-popup-blocking", "disable-popup-blocking"],
-    )?;
-    caps.add_experimental_option(
-        "prefs",
-        serde_json::json!({
-            "profile.default_content_setting_values.popups": 1
-        }),
     )?;
     let user_agent = 
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36".to_string();
@@ -87,6 +81,8 @@ impl Scraper {
     pub async fn scrape_current_chapter(&self, f: &mut File) -> eyre::Result<String> {
         tracing::info!("Scraping chapter");
         self.driver.screenshot(Path::new("debug.png")).await?;
+        self.close_all_popups().await?;
+        self.driver.screenshot(Path::new("debug2.png")).await?;
         let title = self
             .retrieve_element(&self.book_details.identifiers.title)
             .await?
@@ -128,4 +124,27 @@ impl Scraper {
 
         Ok(web_element)
     }
+
+    async fn close_all_popups(&self) -> eyre::Result<()>{
+        let xpaths = vec![
+            // Common close buttons
+            "//*[contains(@class, 'close')]",
+            "//*[@aria-label='Close']",
+            "//*[@aria-label='Dismiss']",
+            "//*[text()='Close']",
+            "//*[text()='Dismiss']",
+            // Close buttons within modals
+            "//*[@role='dialog']//*[contains(@class, 'close')]",
+            "//*[@role='dialog']//*[@aria-label='Close']",
+        ];
+        for xpath in xpaths {
+            if let Ok(element) = self.driver.find(By::XPath(xpath)).await {
+                dbg!(element.clone());
+                element.click().await?;
+            }
+        }
+
+        Ok(())
+    }
+
 }
