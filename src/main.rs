@@ -1,4 +1,10 @@
-use std::{fs::File, io::Write, path::PathBuf, str::FromStr, time::Duration};
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+    str::FromStr,
+    time::Duration,
+};
 
 use eyre::OptionExt;
 use models::config::{BookDetails, ElementSelector, HtmlIdentifier};
@@ -16,6 +22,7 @@ async fn main() -> eyre::Result<()> {
     let mut caps = DesiredCapabilities::chrome();
 
     caps.add_arg("--disable-popup-blocking")?;
+    caps.add_arg("--headless")?;
     caps.add_experimental_option(
         "excludeSwitches",
         vec!["--disable-popup-blocking", "disable-popup-blocking"],
@@ -26,6 +33,10 @@ async fn main() -> eyre::Result<()> {
             "profile.default_content_setting_values.popups": 1
         }),
     )?;
+    let user_agent = 
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36".to_string();
+    let user_arg = format!("user-agent={}", user_agent);
+    caps.add_arg(&user_arg)?;
     let driver = WebDriver::new("http://localhost:4444", caps.clone()).await?;
 
     let scraper = Scraper::new(config_path, driver)?;
@@ -74,7 +85,8 @@ impl Scraper {
     }
 
     pub async fn scrape_current_chapter(&self, f: &mut File) -> eyre::Result<String> {
-        tracing::info!("Starting scraping");
+        tracing::info!("Scraping chapter");
+        self.driver.screenshot(Path::new("debug.png")).await?;
         let title = self
             .retrieve_element(&self.book_details.identifiers.title)
             .await?
