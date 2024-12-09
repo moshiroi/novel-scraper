@@ -10,3 +10,6 @@
   - Do some initial research around the web novel + site you want to scrape from
   - Edit config.yaml with the required fields
   - Run scraper and let it do its magic!
+  
+  
+## Hello - First contribution
